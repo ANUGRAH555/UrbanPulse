@@ -4,12 +4,16 @@ detection.py
 YOLOv8-based real-time vehicle detection module for UrbanPulse.
 
 Uses the pretrained Ultralytics YOLOv8 nano model (trained on COCO),
-which already recognizes car / motorcycle / bus / truck classes,
-so NO custom training is required for the prototype.
+which recognizes car, motorcycle, bus, and truck classes.
+Includes a native pure-PyTorch NMS fallback to guarantee 100% stability
+even on platforms with missing or mismatched torchvision C++ extensions.
 """
 
 import os
+import sys
+import types
 import cv2
+import torch
 
 # COCO class-id -> vehicle type mapping
 VEHICLE_CLASSES = {2: "car", 3: "motorcycle", 5: "bus", 7: "truck"}
@@ -20,21 +24,65 @@ DEFAULT_WEIGHTS = os.path.join(BASE_DIR, "yolov8n.pt")
 _model = None  # loaded lazily (only once, on first use)
 
 
+def _pure_pytorch_nms(boxes, scores, iou_threshold=0.5):
+    """Pure PyTorch implementation of Non-Maximum Suppression (NMS).
+    Guarantees NMS works reliably even when torchvision C++ binary is missing.
+    """
+    if boxes.numel() == 0:
+        return torch.empty((0,), dtype=torch.int64, device=boxes.device)
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 2]
+    y2 = boxes[:, 3]
+    areas = (x2 - x1) * (y2 - y1)
+    order = scores.argsort(descending=True)
+    keep = []
+    while order.numel() > 0:
+        i = order[0].item()
+        keep.append(i)
+        if order.numel() == 1:
+            break
+        xx1 = torch.maximum(x1[i], x1[order[1:]])
+        yy1 = torch.maximum(y1[i], y1[order[1:]])
+        xx2 = torch.minimum(x2[i], x2[order[1:]])
+        yy2 = torch.minimum(y2[i], y2[order[1:]])
+        w = torch.clamp(xx2 - xx1, min=0.0)
+        h = torch.clamp(yy2 - yy1, min=0.0)
+        inter = w * h
+        iou = inter / (areas[i] + areas[order[1:]] - inter + 1e-7)
+        idx = (iou <= iou_threshold).nonzero().reshape(-1)
+        if idx.numel() == 0:
+            break
+        order = order[idx + 1]
+    return torch.tensor(keep, dtype=torch.int64, device=boxes.device)
+
+
+def _ensure_torchvision_compatibility():
+    """Validates torchvision.ops.nms; installs pure-PyTorch fallback if broken."""
+    try:
+        import torchvision
+        import torchvision.ops
+        # Test NMS execution
+        test_boxes = torch.tensor([[0.0, 0.0, 10.0, 10.0]], dtype=torch.float32)
+        test_scores = torch.tensor([0.9], dtype=torch.float32)
+        _ = torchvision.ops.nms(test_boxes, test_scores, 0.5)
+    except Exception:
+        # Install fallback pure PyTorch implementation
+        dummy = types.ModuleType("torchvision")
+        ops_mod = types.ModuleType("torchvision.ops")
+        ops_mod.nms = _pure_pytorch_nms
+        dummy.ops = ops_mod
+        sys.modules["torchvision"] = dummy
+        sys.modules["torchvision.ops"] = ops_mod
+
+
 def load_model(weights: str = None):
     """Loads (and caches) the YOLOv8 model."""
     global _model
     if weights is None:
         weights = DEFAULT_WEIGHTS if os.path.exists(DEFAULT_WEIGHTS) else "yolov8n.pt"
     if _model is None:
-        import sys
-        import types
-        try:
-            import torchvision
-            import torchvision.ops
-        except Exception:
-            if "torchvision" not in sys.modules or not hasattr(sys.modules.get("torchvision"), "ops"):
-                dummy = types.ModuleType("torchvision")
-                sys.modules["torchvision"] = dummy
+        _ensure_torchvision_compatibility()
         from ultralytics import YOLO
         _model = YOLO(weights)
     return _model
