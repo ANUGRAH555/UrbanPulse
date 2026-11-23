@@ -328,11 +328,11 @@ with tab_map["Live Monitoring"]:
 
                         info_ph[i].markdown(
                             lane_card_html(
-                                count=int(info.get("count", 0)),
-                                density=str(info.get("density", "Low")),
-                                status_html=status_html,
-                                green_time=int(info.get("green_time", MIN_GREEN)),
-                                light_state=light_state,
+                                int(info.get("count", 0)),
+                                str(info.get("density", "Low")),
+                                status_html,
+                                int(info.get("green_time", MIN_GREEN)),
+                                light_state,
                             ),
                             unsafe_allow_html=True
                         )
@@ -377,11 +377,11 @@ with tab_map["Live Monitoring"]:
 
             info_ph[i].markdown(
                 lane_card_html(
-                    count=0,
-                    density="Low",
-                    status_html='<span class="lane-status status-waiting">IDLE · Ready</span>',
-                    green_time=MIN_GREEN,
-                    light_state="red",
+                    0,
+                    "Low",
+                    '<span class="lane-status status-waiting">IDLE · Ready</span>',
+                    MIN_GREEN,
+                    "red",
                 ),
                 unsafe_allow_html=True
             )
