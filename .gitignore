@@ -29,3 +29,7 @@ Thumbs.db
 # Generated outputs
 benchmark_result.png
 UrbanPulseProject/benchmark_result.png
+
+# IDE settings
+.vscode/
+.idea/
