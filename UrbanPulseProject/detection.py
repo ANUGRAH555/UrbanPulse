@@ -70,13 +70,13 @@ def _ensure_torchvision_compatibility():
         # Install fallback pure PyTorch implementation
         dummy = types.ModuleType("torchvision")
         ops_mod = types.ModuleType("torchvision.ops")
-        ops_mod.nms = _pure_pytorch_nms
-        dummy.ops = ops_mod
+        setattr(ops_mod, "nms", _pure_pytorch_nms)
+        setattr(dummy, "ops", ops_mod)
         sys.modules["torchvision"] = dummy
         sys.modules["torchvision.ops"] = ops_mod
 
 
-def load_model(weights: str = None):
+def load_model(weights: str | None = None):
     """Loads (and caches) the YOLOv8 model."""
     global _model
     if weights is None:
@@ -100,10 +100,14 @@ def detect_vehicles(frame, conf_threshold: float = 0.35):
 
     try:
         model = load_model()
-        results = model(frame, verbose=False)[0]
+        preds = model(frame, verbose=False)
+        first_res = preds[0] if isinstance(preds, (list, tuple)) else next(iter(preds))
+        boxes = getattr(first_res, "boxes", None)
+        if boxes is None:
+            return []
 
         detections = []
-        for box in results.boxes:
+        for box in boxes:
             cls_id = int(box.cls[0])
             conf = float(box.conf[0])
             if cls_id in VEHICLE_CLASSES and conf >= conf_threshold:

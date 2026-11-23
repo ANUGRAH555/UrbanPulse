@@ -328,10 +328,10 @@ with tab_map["Live Monitoring"]:
 
                         info_ph[i].markdown(
                             lane_card_html(
-                                count=info["count"],
-                                density=info["density"],
+                                count=int(info.get("count", 0)),
+                                density=str(info.get("density", "Low")),
                                 status_html=status_html,
-                                green_time=info["green_time"],
+                                green_time=int(info.get("green_time", MIN_GREEN)),
                                 light_state=light_state,
                             ),
                             unsafe_allow_html=True
@@ -431,14 +431,14 @@ if show_analytics:
                 if "count" in hist_df.columns and not hist_df["count"].empty:
                     mean_counts = hist_df.groupby("lane")["count"].mean()
                     if not mean_counts.empty:
-                        busiest_lane = mean_counts.idxmax()
+                        busiest_lane = str(mean_counts.idxmax())
                 st.metric("Busiest lane (avg)", busiest_lane.replace("_", " ").title())
             with s3:
                 peak_val = 0
                 if "count" in hist_df.columns and not hist_df["count"].empty:
-                    max_c = hist_df["count"].max()
-                    if pd.notna(max_c):
-                        peak_val = int(max_c)
+                    counts_list = [int(x) for x in hist_df["count"] if pd.notna(x)]
+                    if counts_list:
+                        peak_val = max(counts_list)
                 st.metric("Peak single-lane count", peak_val)
 
             section_label("Export Session Report")

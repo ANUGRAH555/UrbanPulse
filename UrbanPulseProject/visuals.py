@@ -7,6 +7,7 @@ Inter typeface, no emoji glyphs anywhere (text + shape based indicators
 instead) — meant to look like a polished product, not a hobby script.
 """
 
+from typing import Any
 import streamlit as st
 
 DENSITY_COLOR = {"Low": "#10B981", "Medium": "#F59E0B", "High": "#EF4444"}
@@ -244,7 +245,7 @@ def lane_title_html(name: str, subtitle: str = "") -> str:
     return f'<div class="lane-name">{name}</div>{sub}'
 
 
-def lane_card_html(count: int, density: str, status_html: str, green_time: int, light_state: str) -> str:
+def lane_card_html(count: Any, density: Any, status_html: str, green_time: Any, light_state: str) -> str:
     """Renders a complete, cleanly styled card for lane metrics and traffic light."""
     tl_html = traffic_light_html(light_state)
     d_badge = density_badge_html(density)
