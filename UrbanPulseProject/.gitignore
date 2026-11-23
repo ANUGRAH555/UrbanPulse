@@ -28,3 +28,6 @@ benchmark_result.png
 # IDE settings
 .vscode/
 .idea/
+
+# Pyrefly local configuration
+pyrefly.toml
