@@ -434,11 +434,11 @@ if show_analytics:
                         busiest_lane = str(mean_counts.idxmax())
                 st.metric("Busiest lane (avg)", busiest_lane.replace("_", " ").title())
             with s3:
-                peak_val = 0
-                if "count" in hist_df.columns and not hist_df["count"].empty:
-                    counts_list = [int(x) for x in hist_df["count"] if pd.notna(x)]
-                    if counts_list:
-                        peak_val = max(counts_list)
+                raw_counts = [
+                    int(entry["count"]) for entry in st.session_state.history
+                    if isinstance(entry, dict) and "count" in entry and isinstance(entry["count"], (int, float))
+                ]
+                peak_val = max(raw_counts) if raw_counts else 0
                 st.metric("Peak single-lane count", peak_val)
 
             section_label("Export Session Report")
