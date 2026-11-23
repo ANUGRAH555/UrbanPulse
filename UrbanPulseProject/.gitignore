@@ -1,0 +1,26 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+.python/
+
+# Temporary video files (prevent exceeding GitHub 100MB limit)
+temp/*.mp4
+temp/*.avi
+temp/*.mov
+!temp/.gitkeep
+
+# Operating system artifacts
+.DS_Store
+Thumbs.db
+
+# Generated outputs
+benchmark_result.png

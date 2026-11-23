@@ -1,0 +1,31 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+.python/
+
+# Temporary video files (prevent exceeding GitHub 100MB limit)
+UrbanPulseProject/temp/*.mp4
+UrbanPulseProject/temp/*.avi
+UrbanPulseProject/temp/*.mov
+temp/*.mp4
+temp/*.avi
+temp/*.mov
+!temp/.gitkeep
+!UrbanPulseProject/temp/.gitkeep
+
+# Operating system artifacts
+.DS_Store
+Thumbs.db
+
+# Generated outputs
+benchmark_result.png
+UrbanPulseProject/benchmark_result.png
